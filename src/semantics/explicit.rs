@@ -34,11 +34,13 @@ pub type Index = graph::DefaultIx;
 pub struct Expander<'f, P, E> {
     // TODO: make this into an animator, too
     to_visit: VecDeque<NodeIndex<Index>>,
+    // We can't use the visit map for the graph, as it may be a fixed size
     seen: HashSet<NodeIndex<Index>>,
     graph: Explicit<P, E>,
     visitor: &'f dyn Visitor<P, E>,
 }
 
+/// Object that visits the nodes of an explicit LTS, expanding the transitions.
 pub trait Visitor<P, E> {
     fn visit(&self, graph: &mut Explicit<P, E>, node: NodeIndex<Index>);
 }
@@ -47,7 +49,8 @@ impl<'v, P, E> Expander<'v, P, E> {
     /// Expands the explicit graph by applying the visitor to each node.
     pub fn expand(mut self) -> Explicit<P, E> {
         while let Some(n) = self.to_visit.pop_back() {
-            if !self.seen.insert(n) {
+            let first_visit = self.seen.insert(n);
+            if !first_visit {
                 continue;
             }
 
@@ -63,7 +66,7 @@ impl<'v, P, E> Expander<'v, P, E> {
 
     pub fn new(initial: P, visitor: &'v impl Visitor<P, E>) -> Self {
         let mut graph = Explicit::new();
-        let initial = graph.add_node(Node { process: initial });
+        let initial = graph.add_node(Node::Process(initial));
 
         let mut to_visit = VecDeque::new();
         to_visit.push_back(initial);

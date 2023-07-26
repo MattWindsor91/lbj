@@ -1,0 +1,48 @@
+cspm = {
+    SOI ~
+    def* ~
+    EOI
+}
+
+def = {
+    process_def
+}
+
+process_def = {
+    process_name ~
+    "=" ~
+    process_body
+}
+
+process_name = @{
+    !prim_process ~
+    ASCII_ALPHA_UPPER ~
+    ASCII_ALPHANUMERIC*
+}
+
+process_body = {
+    prim_process
+}
+
+/// A primitive process.
+prim_process = {
+    skip |
+    stop
+}
+
+skip = { "SKIP" }
+stop = { "STOP" }
+
+COMMENT = _{
+    single_comment |
+    multi_comment
+}
+
+single_comment = @{ "--" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+multi_comment = @{ multi_comment_begin ~ multi_comment_inner* ~ multi_comment_end }
+multi_comment_begin = @{ "{-" }
+multi_comment_end = @{ "-}" }
+multi_comment_inner = @{ multi_comment | (!multi_comment_begin ~ !multi_comment_end ~ ANY) }
+
+WHITESPACE = _{ " " | "\t" | NEWLINE }
